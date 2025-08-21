@@ -63,7 +63,7 @@ VITE_DYNAMIC_ENVIRONMENT_ID=your_dynamic_environment_id_here
 > You need to visit both the [Dynamic Dashboard](https://app.dynamic.xyz/) and the [ZeroDev Dashboard](https://app.zerodev.app/) to create projects and obtain your project credentials (such as Project ID and Environment ID).
 
 > **NB**
-> Just to mention that as of today --`20th Aug 2025`-- the Zerodev's smart wallets & AA feature is available for zeroDev v1, so you should create your project from this domain --`https://dashboard-v1.zerodev.app/`-- and not this one --`https://dashboard.zerodev.app/`-- (whose V2 support coming soon)
+> Just to mention that as of today --`20th Aug 2025`-- the Zerodev's smart wallets & AA feature is available for zeroDev v1, so you should create your project from this domain --`[zeroDev v1](https://dashboard-v1.zerodev.app/)`-- and not this one --`[zeroDev v2](https://dashboard.zerodev.app/)`-- (whose V2 support coming soon)
 
 ### 4. Run the app locally
 
