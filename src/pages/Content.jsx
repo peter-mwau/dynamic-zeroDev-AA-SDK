@@ -2,15 +2,14 @@ import React, { use, useState } from "react";
 import CONTRACTABI from "../artifacts/funABI.json";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { useContractRead } from "wagmi";
 import { toast, ToastContainer } from "react-toastify";
 import { ethers } from "ethers";
-import { encodeFunctionData, parseAbi } from "viem";
+import { encodeFunctionData } from "viem";
 
 const contract_address = import.meta.env.VITE_APP_CONTRACT_ADDRESS;
 const contractAbi = CONTRACTABI.abi;
 
-function Content(props) {
+function Content() {
   const [isCreating, setIsCreating] = React.useState(false);
   const { primaryWallet, user } = useDynamicContext();
   const [name, setName] = useState("");
@@ -265,83 +264,104 @@ function Content(props) {
   }, [primaryWallet, contract_address]);
 
   return (
-    <div className="mt-[100px] max-w-xl mx-auto p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
-      <ToastContainer className="absolute top-0 right-0 mt-4 mr-4" />
-      <h1 className="text-3xl font-bold mb-2 text-blue-700">The Test Arena</h1>
-      <p className="text-gray-600 mb-6">Add Persons to Earn!</p>
+    <div className="w-full max-w-4xl mx-auto px-6">
+      <ToastContainer
+        className="absolute top-6 right-6 z-50"
+        toastClassName="bg-gray-900/80 backdrop-blur-md text-white border border-gray-700/30 rounded-xl"
+        progressClassName="bg-gradient-to-r from-[#20ff96] to-[#00cc75]"
+      />
 
-      <button
-        onClick={debugConnector}
-        className="mb-4 px-3 py-1 bg-gray-200 text-sm rounded mr-2"
-      >
-        Debug Connector
-      </button>
+      {/* Header Section */}
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-[#20ff96] to-[#00cc75]">
+          The Test Arena
+        </h1>
+        <p className="text-gray-300 text-lg">Add Persons to Earn PRN Tokens!</p>
+        <div className="h-1 w-24 bg-gradient-to-r from-[#20ff96] to-[#00cc75] mx-auto mt-2 rounded-full"></div>
+      </div>
 
-      <button
-        onClick={loadAllPersons}
-        disabled={isLoadingPersons}
-        className="mb-4 px-3 py-1 bg-green-200 text-sm rounded"
-      >
-        {isLoadingPersons ? "Loading..." : "Refresh Persons"}
-      </button>
+      {/* Debug and Refresh Buttons */}
+      <div className="flex flex-wrap gap-3 mb-6 justify-center">
+        <button
+          onClick={debugConnector}
+          className="px-4 py-2 bg-gray-800/50 backdrop-blur-md text-gray-300 text-sm rounded-lg border border-gray-700/30 hover:border-[#20ff96]/30 transition-all duration-300"
+        >
+          Debug Connector
+        </button>
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-700 font-semibold">Your Balance:</span>
-          <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-mono text-lg border border-blue-100">
+        <button
+          onClick={loadAllPersons}
+          disabled={isLoadingPersons}
+          className="px-4 py-2 bg-gradient-to-r from-[#20ff96] to-[#00cc75] text-gray-900 text-sm rounded-lg font-medium hover:opacity-90 transition-all duration-300 disabled:opacity-50"
+        >
+          {isLoadingPersons ? "Loading..." : "Refresh Persons"}
+        </button>
+      </div>
+
+      {/* Balance and Create Button Section */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8 p-6 bg-gray-900/40 backdrop-blur-md rounded-2xl border border-gray-700/30">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-300 font-semibold">Your Balance:</span>
+          <span className="inline-block px-4 py-2 rounded-xl bg-black/30 text-[#20ff96] font-mono text-lg border border-gray-700/30">
             {balance?.toString() || "0"} PRN
           </span>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition"
-          >
-            {showCreateForm ? "Hide Form" : "Create Person"}
-          </button>
-        </div>
+
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#20ff96] to-[#00cc75] text-gray-900 font-semibold shadow-lg hover:shadow-[#20ff96]/20 hover:scale-105 transition-all duration-300"
+        >
+          {showCreateForm ? "Hide Form" : "Create Person"}
+        </button>
       </div>
 
       {/* Modal-like form overlay */}
       {showCreateForm && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
-          style={{ background: "rgba(0, 0, 0, 0.6)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md"
+          onClick={() => setShowCreateForm(false)}
         >
-          <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md relative border border-gray-700/50"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
+              className="absolute top-4 right-4 text-gray-400 hover:text-[#20ff96] text-xl font-bold transition-colors"
               onClick={() => setShowCreateForm(false)}
               aria-label="Close"
             >
               &times;
             </button>
-            <h2 className="text-xl font-bold mb-4 text-blue-700">
+
+            <h2 className="text-2xl font-bold mb-6 text-white text-center">
               Create Person
             </h2>
-            <form onSubmit={createPerson} className="flex flex-col gap-4">
+
+            <form onSubmit={createPerson} className="flex flex-col gap-5">
               <input
                 type="text"
                 placeholder="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="border border-gray-700/50 bg-gray-800/40 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20ff96]/50 backdrop-blur-sm"
                 required
               />
+
               <input
                 type="number"
                 placeholder="Age"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="border border-gray-700/50 bg-gray-800/40 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20ff96]/50 backdrop-blur-sm"
                 required
                 min="0"
               />
-              <div className="flex gap-2">
+
+              <div className="flex gap-3 mt-2">
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="flex-1 bg-blue-600 hover:cursor-pointer hover:bg-blue-700 text-white font-semibold py-2 rounded transition disabled:opacity-60"
+                  className="flex-1 bg-gradient-to-r from-[#20ff96] to-[#00cc75] hover:opacity-90 text-gray-900 font-semibold py-3 rounded-xl transition-all duration-300 disabled:opacity-60"
                 >
                   {isCreating ? "Creating..." : "Create Person"}
                 </button>
@@ -351,74 +371,116 @@ function Content(props) {
         </div>
       )}
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-        <h2 className="text-lg font-semibold mb-3 text-gray-800">
+      {/* User Details Section */}
+      <div className="mb-8 p-6 bg-gray-900/40 backdrop-blur-md rounded-2xl border border-gray-700/30">
+        <h2 className="text-xl font-semibold mb-5 text-white flex items-center">
+          <svg
+            className="w-5 h-5 mr-2 text-[#20ff96]"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clipRule="evenodd"
+            />
+          </svg>
           Your Details
         </h2>
-        <div className="flex flex-col gap-2">
-          <div>
-            <span className="font-medium text-gray-700">Name:</span>
-            <span className="ml-2 text-gray-900">{user?.name || "N/A"}</span>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-black/20 p-4 rounded-xl border border-gray-700/30">
+            <span className="text-sm text-gray-400">Name:</span>
+            <p className="text-white font-medium">{user?.name || "N/A"}</p>
           </div>
-          <div>
-            <span className="font-medium text-gray-700">Address:</span>
-            <span className="ml-2 text-gray-900 text-xs">
+
+          <div className="bg-black/20 p-4 rounded-xl border border-gray-700/30">
+            <span className="text-sm text-gray-400">Address:</span>
+            <p className="text-white font-mono text-xs truncate">
               {primaryWallet?.address || "N/A"}
-            </span>
+            </p>
           </div>
-          <div>
-            <span className="font-medium text-gray-700">Wallet Type:</span>
-            <span className="ml-2 text-gray-900">
-              {isZeroDev ? "ZeroDev AA" : "Regular"}
-            </span>
+
+          <div className="bg-black/20 p-4 rounded-xl border border-gray-700/30">
+            <span className="text-sm text-gray-400">Wallet Type:</span>
+            <p className="text-white">{isZeroDev ? "ZeroDev AA" : "Regular"}</p>
           </div>
+
           {isZeroDev && (
-            <div>
-              <span className="font-medium text-gray-700">EOA Address:</span>
-              <span className="ml-2 text-gray-900 text-xs">
+            <div className="bg-black/20 p-4 rounded-xl border border-gray-700/30">
+              <span className="text-sm text-gray-400">EOA Address:</span>
+              <p className="text-white font-mono text-xs truncate">
                 {primaryWallet?.connector?.eoaAddress || "N/A"}
-              </span>
+              </p>
             </div>
           )}
         </div>
+      </div>
 
-        {/* All Persons List */}
-        <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              All Persons ({contractPersons?.length || 0})
-            </h2>
-            <span className="text-xs text-gray-500">
-              Data source: Smart Contract
-            </span>
-          </div>
+      {/* All Persons List */}
+      <div className="p-6 bg-gray-900/40 backdrop-blur-md rounded-2xl border border-gray-700/30">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <svg
+              className="w-5 h-5 mr-2 text-[#20ff96]"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                clipRule="evenodd"
+              />
+            </svg>
+            All Persons ({contractPersons?.length || 0})
+          </h2>
+          <span className="text-xs text-gray-500 mt-2 md:mt-0">
+            Data source: Smart Contract
+          </span>
+        </div>
 
-          {contractPersons && contractPersons.length > 0 ? (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {contractPersons.map((person, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200"
-                >
-                  <div>
-                    <span className="font-medium text-gray-800">
-                      {person.name || `Person ${index + 1}`}
-                    </span>
-                    <span className="ml-2 text-sm text-gray-600">
-                      Age: {person.age?.toString() || "N/A"}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-400">#{index + 1}</span>
+        {contractPersons && contractPersons.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto p-1">
+            {contractPersons.map((person, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center p-4 bg-black/20 rounded-xl border border-gray-700/30 hover:border-[#20ff96]/30 transition-all duration-300"
+              >
+                <div>
+                  <span className="font-medium text-white">
+                    {person.name || `Person ${index + 1}`}
+                  </span>
+                  <span className="block text-sm text-gray-400 mt-1">
+                    Age: {person.age?.toString() || "N/A"}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              <p>No persons found</p>
-              <p className="text-xs mt-1">Create your first person above!</p>
-            </div>
-          )}
-        </div>
+                <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded-full">
+                  #{index + 1}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 border border-gray-700/30 rounded-xl bg-black/20">
+            <svg
+              className="w-12 h-12 mx-auto text-gray-600 mb-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 4v1m0 14v1m-7-7.5h14M5 12h14"
+              />
+            </svg>
+            <p className="text-gray-400">No persons found</p>
+            <p className="text-xs mt-1 text-gray-500">
+              Create your first person above!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
