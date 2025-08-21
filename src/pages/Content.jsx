@@ -21,17 +21,46 @@ function Content(props) {
   const [contractPersons, setContractPersons] = useState([]);
   const [isReadingPersons, setIsReadingPersons] = useState(false);
   const [readError, setReadError] = useState(null);
+  const [balance, setBalance] = useState(null);
 
   const isZeroDev = isZeroDevConnector(primaryWallet?.connector);
 
   const contractInterface = new ethers.Interface(contractAbi);
 
-  const { data: balance } = useContractRead({
-    address: contract_address,
-    abi: contractAbi,
-    functionName: "balanceOf",
-    args: [primaryWallet?.address],
-  });
+  //function to get token balance
+  const getTokenBalance = async () => {
+    if (!primaryWallet?.connector) {
+      setReadError("Wallet not connected");
+      return;
+    }
+
+    try {
+      const walletClient = await primaryWallet.connector.getWalletClient();
+      const result = await walletClient.request({
+        method: "eth_call",
+        params: [
+          {
+            to: contract_address,
+            data: contractInterface.encodeFunctionData("balanceOf", [
+              primaryWallet?.address,
+            ]),
+          },
+          "latest",
+        ],
+      });
+
+      const decodedResult = contractInterface.decodeFunctionResult(
+        "balanceOf",
+        result
+      );
+
+      setBalance(Math.floor(Number(ethers.formatEther(decodedResult[0]))));
+      console.log("Token balance:", decodedResult);
+    } catch (error) {
+      console.error("Error getting token balance:", error);
+      setReadError(error);
+    }
+  };
 
   // Read all persons from contract
   const getAllPersons = async () => {
@@ -96,17 +125,6 @@ function Content(props) {
       setIsReadingPersons(false);
     }
   };
-
-  console.log("=== CONTRACT READ DEBUG ===");
-  console.log("Contract address:", contract_address);
-  console.log("Contract persons:", contractPersons);
-  console.log("Is loading:", isReadingPersons);
-  console.log("Read error:", readError);
-  console.log(
-    "ABI function:",
-    contractAbi?.find((f) => f.name === "getAllPersons")
-  );
-  console.log("================================");
 
   // Alternative method using the wallet's sendTransaction if available
   const createPerson = async (e) => {
@@ -228,6 +246,7 @@ function Content(props) {
     setIsLoadingPersons(true);
     try {
       await getAllPersons();
+      await getTokenBalance();
       toast.success("Persons list refreshed!");
     } catch (error) {
       console.error("Error loading persons:", error);
@@ -241,18 +260,15 @@ function Content(props) {
   React.useEffect(() => {
     if (primaryWallet?.connector && contract_address) {
       getAllPersons();
+      getTokenBalance();
     }
   }, [primaryWallet, contract_address]);
 
   return (
     <div className="mt-[100px] max-w-xl mx-auto p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
       <ToastContainer className="absolute top-0 right-0 mt-4 mr-4" />
-      <h1 className="text-3xl font-bold mb-2 text-blue-700">
-        Welcome to ABYA Passport
-      </h1>
-      <p className="text-gray-600 mb-6">
-        Your one-stop solution for managing digital identities.
-      </p>
+      <h1 className="text-3xl font-bold mb-2 text-blue-700">The Test Arena</h1>
+      <p className="text-gray-600 mb-6">Add Persons to Earn!</p>
 
       <button
         onClick={debugConnector}
@@ -273,7 +289,7 @@ function Content(props) {
         <div className="flex items-center gap-2">
           <span className="text-gray-700 font-semibold">Your Balance:</span>
           <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-mono text-lg border border-blue-100">
-            {balance?.toString() || "0"}
+            {balance?.toString() || "0"} PRN
           </span>
         </div>
         <div className="flex gap-2">
