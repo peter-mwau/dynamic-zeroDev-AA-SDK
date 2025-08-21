@@ -16,6 +16,11 @@ function Content(props) {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [allPersons, setAllPersons] = useState([]);
+  const [isLoadingPersons, setIsLoadingPersons] = useState(false);
+  const [contractPersons, setContractPersons] = useState([]);
+  const [isReadingPersons, setIsReadingPersons] = useState(false);
+  const [readError, setReadError] = useState(null);
 
   const isZeroDev = isZeroDevConnector(primaryWallet?.connector);
 
@@ -28,6 +33,82 @@ function Content(props) {
     args: [primaryWallet?.address],
   });
 
+  // Read all persons from contract
+  const getAllPersons = async () => {
+    if (!primaryWallet?.connector) {
+      setReadError("Wallet not connected");
+      return;
+    }
+
+    setIsReadingPersons(true);
+    setReadError(null);
+
+    try {
+      const walletClient = await primaryWallet.connector.getWalletClient();
+
+      if (!walletClient) {
+        throw new Error("Failed to get wallet client");
+      }
+
+      // Encode the function call data
+      const data = encodeFunctionData({
+        abi: contractAbi,
+        functionName: "getAllPersons",
+        args: [],
+      });
+
+      // Use eth_call to read from contract
+      const result = await walletClient.request({
+        method: "eth_call",
+        params: [
+          {
+            to: contract_address,
+            data: data,
+          },
+          "latest",
+        ],
+      });
+
+      // Decode the result
+      const decodedData = contractInterface.decodeFunctionResult(
+        "getAllPersons",
+        result
+      );
+
+      console.log("Raw result:", result);
+      console.log("Decoded data:", decodedData);
+      console.log("Data type:", typeof decodedData);
+      console.log("Is array:", Array.isArray(decodedData));
+
+      // The decoded data should be an array where the first element is the actual persons array
+      const personsData = decodedData[0] || [];
+
+      if (personsData) {
+        console.log("Persons data length:", personsData.length);
+        console.log("First person:", personsData[0]);
+      }
+
+      setContractPersons(personsData);
+    } catch (error) {
+      console.error("Error reading contract:", error);
+      setReadError(error);
+    } finally {
+      setIsReadingPersons(false);
+    }
+  };
+
+  console.log("=== CONTRACT READ DEBUG ===");
+  console.log("Contract address:", contract_address);
+  console.log("Contract persons:", contractPersons);
+  console.log("Is loading:", isReadingPersons);
+  console.log("Read error:", readError);
+  console.log(
+    "ABI function:",
+    contractAbi?.find((f) => f.name === "getAllPersons")
+  );
+  console.log("================================");
+
+  // Alternative method using the wallet's sendTransaction if available
   const createPerson = async (e) => {
     e.preventDefault();
 
@@ -40,8 +121,6 @@ function Content(props) {
 
     try {
       if (isZeroDev) {
-        console.log("Using alternative ZeroDev approach");
-
         // Try to get the wallet's sendTransaction method
         const walletClient = await primaryWallet.connector.getWalletClient();
 
@@ -64,7 +143,32 @@ function Content(props) {
         });
 
         console.log("Transaction hash:", hash);
-        toast.success(`Person created successfully! Hash: ${hash}`);
+
+        // Create links to check the transaction
+        console.log("🔍 Check your transaction:");
+        console.log(
+          `📍 Sepolia Etherscan: https://sepolia.etherscan.io/tx/${hash}`
+        );
+        console.log(
+          `📍 JiffyScan (AA Explorer): https://jiffyscan.xyz/userOpHash/${hash}?network=sepolia`
+        );
+
+        toast.success(
+          <div>
+            <div>Person created successfully!</div>
+            <div className="text-xs mt-1">
+              <a
+                href={`https://sepolia.etherscan.io/tx/${hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-300 hover:text-blue-100"
+              >
+                View on Etherscan →
+              </a>
+            </div>
+          </div>,
+          { autoClose: 10000 }
+        );
 
         // Reset form
         setName("");
@@ -85,8 +189,13 @@ function Content(props) {
   const debugConnector = async () => {
     if (!primaryWallet?.connector) return;
 
+    console.log("=== CONNECTOR DEBUG ===");
     console.log("Connector methods:", Object.keys(primaryWallet.connector));
-    console.log("Full connector:", primaryWallet.connector);
+    console.log(
+      "EOA Address (from connector):",
+      primaryWallet.connector.eoaAddress
+    );
+    console.log("Wallet Address (primaryWallet):", primaryWallet.address);
 
     // Check if kernelClient is available
     if (primaryWallet.connector.kernelClient) {
@@ -94,6 +203,7 @@ function Content(props) {
         const kernelClient = await primaryWallet.connector.kernelClient;
         console.log("Kernel client:", kernelClient);
         console.log("Kernel client methods:", Object.keys(kernelClient));
+        console.log("Smart Wallet Address:", kernelClient.account?.address);
       } catch (error) {
         console.error("Error getting kernel client:", error);
       }
@@ -104,29 +214,35 @@ function Content(props) {
       try {
         const walletClient = await primaryWallet.connector.getWalletClient();
         console.log("Wallet client:", walletClient);
-        console.log("Wallet client methods:", Object.keys(walletClient));
+        console.log("Wallet client account:", walletClient.account?.address);
       } catch (error) {
         console.error("Error getting wallet client:", error);
       }
     }
 
-    // Check if getProvider is available
-    if (typeof primaryWallet.connector.getProvider === "function") {
-      try {
-        const provider = await primaryWallet.connector.getProvider();
-        console.log("Provider:", provider);
-      } catch (error) {
-        console.error("Error getting provider:", error);
-      }
+    console.log("=== END DEBUG ===");
+  };
+
+  // Manual function to load all persons
+  const loadAllPersons = async () => {
+    setIsLoadingPersons(true);
+    try {
+      await getAllPersons();
+      toast.success("Persons list refreshed!");
+    } catch (error) {
+      console.error("Error loading persons:", error);
+      toast.error("Failed to load persons");
+    } finally {
+      setIsLoadingPersons(false);
     }
   };
 
   // Call this to debug
   React.useEffect(() => {
-    if (primaryWallet?.connector) {
-      debugConnector();
+    if (primaryWallet?.connector && contract_address) {
+      getAllPersons();
     }
-  }, [primaryWallet]);
+  }, [primaryWallet, contract_address]);
 
   return (
     <div className="mt-[100px] max-w-xl mx-auto p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
@@ -138,12 +254,19 @@ function Content(props) {
         Your one-stop solution for managing digital identities.
       </p>
 
-      {/* Debug button */}
       <button
         onClick={debugConnector}
-        className="mb-4 px-3 py-1 bg-gray-200 text-sm rounded"
+        className="mb-4 px-3 py-1 bg-gray-200 text-sm rounded mr-2"
       >
         Debug Connector
+      </button>
+
+      <button
+        onClick={loadAllPersons}
+        disabled={isLoadingPersons}
+        className="mb-4 px-3 py-1 bg-green-200 text-sm rounded"
+      >
+        {isLoadingPersons ? "Loading..." : "Refresh Persons"}
       </button>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -233,6 +356,52 @@ function Content(props) {
               {isZeroDev ? "ZeroDev AA" : "Regular"}
             </span>
           </div>
+          {isZeroDev && (
+            <div>
+              <span className="font-medium text-gray-700">EOA Address:</span>
+              <span className="ml-2 text-gray-900 text-xs">
+                {primaryWallet?.connector?.eoaAddress || "N/A"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* All Persons List */}
+        <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              All Persons ({contractPersons?.length || 0})
+            </h2>
+            <span className="text-xs text-gray-500">
+              Data source: Smart Contract
+            </span>
+          </div>
+
+          {contractPersons && contractPersons.length > 0 ? (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {contractPersons.map((person, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200"
+                >
+                  <div>
+                    <span className="font-medium text-gray-800">
+                      {person.name || `Person ${index + 1}`}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-600">
+                      Age: {person.age?.toString() || "N/A"}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-400">#{index + 1}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              <p>No persons found</p>
+              <p className="text-xs mt-1">Create your first person above!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
