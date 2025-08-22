@@ -81,7 +81,7 @@ export default function Provider({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <DynamicContextProvider
-        theme="light"
+        theme="dark"
         settings={{
           environmentId: "4a59cb0d-1840-4245-b235-5af508690679",
           appName: "ABYA Passport",

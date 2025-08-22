@@ -16,7 +16,7 @@ function Navbar({ currentPage, setCurrentPage, darkMode }) {
 
   return (
     <nav
-      className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-[90vw] max-w-4xl rounded-2xl transition-all duration-300 ${
+      className={`fixed top-6 left-1/2 transform z-50 w-[90vw] max-w-4xl rounded-2xl transition-all duration-300 ${
         isScrolled
           ? "bg-gray-900/80 backdrop-blur-xl shadow-2xl border border-gray-700/30"
           : "bg-gray-900/60 backdrop-blur-md shadow-lg border border-gray-700/20"
@@ -40,7 +40,7 @@ function Navbar({ currentPage, setCurrentPage, darkMode }) {
           </svg>
         </div>
         <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-[#20ff96] to-[#00cc75] tracking-tight">
-          <Link to={"/"}>Web3App</Link>
+          <Link to={"/"}>Web3DApp</Link>
         </span>
       </div>
 
@@ -63,7 +63,7 @@ function Navbar({ currentPage, setCurrentPage, darkMode }) {
           >
             {item.name}
             <span
-              className={`absolute -bottom-1 left-0 h-0.5 transition-all duration-300
+              className={`absolute -bottom-0.5 left-0 h-0.5 transition-all duration-300
                     ${
                       currentPage === item.page
                         ? "bg-gradient-to-r from-[#20ff96] to-[#00cc75] w-full"
@@ -76,9 +76,10 @@ function Navbar({ currentPage, setCurrentPage, darkMode }) {
       </div>
 
       {/* Web3 Widget */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shadow-sm shadow-white">
         <DynamicWidget
           variant="dropdown"
+          className="bg-gray-900/80 backdrop-blur-lg border border-gray-700/30 rounded-xl"
           innerButtonComponent={
             <div className="px-4 py-2 bg-gradient-to-r from-[#20ff96] to-[#00cc75] text-gray-900 font-medium rounded-lg hover:shadow-lg hover:shadow-[#20ff96]/30 transition-all duration-300">
               AA Sign In
